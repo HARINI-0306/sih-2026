@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShowYourWork - Evidence-First Application Validation</title>
+  <meta name="description" content="ShowYourWork: Evidence-First Application Validation and Document Verification Platform.">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       Top Navigation Bar (Restrained Navy)
+       ======================================================================== -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-titles">
+        <h1>ShowYourWork</h1>
+        <div class="brand-subtitle">Evidence-First Application Validation</div>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="role-switcher-box">
+        <label for="roleSelect">Active Role:</label>
+        <select id="roleSelect" class="role-select" onchange="window.App.switchRole(this.value)">
+          <option value="OFFICER" selected>Officer (Regulatory Scrutiny)</option>
+          <option value="INSTITUTION">Institution (Applicant)</option>
+          <option value="ADMIN">Admin (Rule Configuration)</option>
+        </select>
+      </div>
+
+      <button class="login-btn" onclick="window.App.openLoginModal()" id="btnOpenLogin">
+        <span>Account / Sign In</span>
+      </button>
+
+      <button class="quick-btn secondary" onclick="window.App.printOfficialReport()" id="btnPrintReport">
+        <span>Export Summary</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       Subnav & Tab Selection Bar
+       ======================================================================== -->
+  <nav class="subnav-bar">
+    <ul class="tabs-list" id="mainTabsList">
+      <li>
+        <button class="tab-btn active" data-tab="overviewTab" id="tabOverview">
+          <span>Dossiers & Applications</span>
+          <span class="tab-count" id="countApps">4</span>
+        </button>
+      </li>
+      <li>
+        <button class="tab-btn" data-tab="deepScrutinyTab" id="tabDeepScrutiny">
+          <span>Deep Scrutiny & Evidence Cards</span>
+          <span class="tab-count" id="countFlagsBadge" style="background: #fee2e2; color: #dc2626;">3 Flags</span>
+        </button>
+      </li>
+      <li>
+        <button class="tab-btn" data-tab="evidenceGraphTab" id="tabEvidenceGraph">
+          <span>Evidence Graph</span>
+        </button>
+      </li>
+      <li>
+        <button class="tab-btn" data-tab="verificationLadderTab" id="tabVerificationLadder">
+          <span>Verification Ladder</span>
+        </button>
+      </li>
+      <li>
+        <button class="tab-btn" data-tab="infraTab" id="tabInfra">
+          <span>Facility & Infrastructure Audit</span>
+        </button>
+      </li>
+      <li id="navItemRules">
+        <button class="tab-btn" data-tab="rulesEngineTab" id="tabRules">
+          <span>Rule Config</span>
+        </button>
+      </li>
+      <li id="navItemAudit">
+        <button class="tab-btn" data-tab="auditTrailTab" id="tabAudit">
+          <span>Audit Ledger</span>
+        </button>
+      </li>
+      <li id="navItemInstitution">
+        <button class="tab-btn" data-tab="institutionTab" id="tabInstitution">
+          <span>Institution Pre-Flight</span>
+        </button>
+      </li>
+      <li>
+        <button class="tab-btn" data-tab="demoMetricsTab" id="tabDemoMetrics">
+          <span>Metrics & Walkthrough</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="context-bar">
+      <span id="selectedAppTitle">Apex Institute of Technology & Management</span>
+    </div>
+  </nav>
+
+  <!-- ========================================================================
+       Main Content Container
+       ======================================================================== -->
+  <main class="app-container">
+
+    <!-- TAB 1: OVERVIEW & APPLICATIONS (Officer / General) -->
+    <section class="tab-panel active" id="overviewTab">
+      <!-- KPI Metric Strip -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon">📁</div>
+          <div class="kpi-content">
+            <h3 id="kpiTotalApps">4</h3>
+            <p>Active Dossiers</p>
+            <div class="kpi-subtext">Current Processing Cycle</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">⚡</div>
+          <div class="kpi-content">
+            <h3 id="kpiAutoValidated">88.4%</h3>
+            <p>Preliminary Auto-Validated</p>
+            <div class="kpi-subtext">Exception Triage Active</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">⚠</div>
+          <div class="kpi-content">
+            <h3 id="kpiFlagsPending">3</h3>
+            <p>Actionable Flags</p>
+            <div class="kpi-subtext" style="color: #d97706;">Requiring Officer Sign-off</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">🛡️</div>
+          <div class="kpi-content">
+            <h3 id="kpiDeterrenceScore">100%</h3>
+            <p>Audit Log Integrity</p>
+            <div class="kpi-subtext" style="color: #2563eb;">SHA-256 Hash Chained</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications Master Table with Filters -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>Applications Under Regulatory Scrutiny</span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <label style="font-size: 11px; color: var(--text-muted);">Status Filter:</label>
+            <select id="tableStatusFilter" onchange="window.App.filterApplicationsTable(this.value)" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-medium); font-size: 11px;">
+              <option value="ALL">All Statuses (4)</option>
+              <option value="Verified">Verified</option>
+              <option value="Mismatch detected">Mismatch detected</option>
+              <option value="Expired">Expired</option>
+              <option value="Verification pending">Verification pending</option>
+              <option value="Source unavailable">Source unavailable</option>
+              <option value="Manual review required">Manual review required</option>
+            </select>
+          </div>
+        </div>
+        <div class="data-table-wrapper">
+          <table class="data-table" id="applicationsTable">
+            <thead>
+              <tr>
+                <th>Application ID & Date</th>
+                <th>Institution Name & Region</th>
+                <th>Category & Sanctioned Intake</th>
+                <th>Compliance Score</th>
+                <th>Status (The 6 Statuses)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="applicationsTableBody">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick Signals and Architecture Overview -->
+      <div id="forensicsContainer"></div>
+    </section>
+
+    <!-- TAB 2: DEEP SCRUTINY & EVIDENCE CARDS -->
+    <section class="tab-panel" id="deepScrutinyTab">
+      <div class="panel-card" style="margin-bottom: 16px;">
+        <div class="panel-body" style="padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Select Document to Inspect:</span>
+            <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;" id="docListSelector">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+          <span class="badge status-pending">Interactive Coordinate Overlay Active</span>
+        </div>
+      </div>
+
+      <div class="evidence-viewer-grid">
+        <!-- Left: Document Viewport with Bounding Box Overlay -->
+        <div class="document-canvas-box">
+          <div class="doc-canvas-header">
+            <span>DOCUMENT IMAGE SCAN & EVIDENCE NODES</span>
+            <span class="clause-tag">OCR Confidence > 96%</span>
+          </div>
+          <div class="doc-preview-viewport" id="documentViewport">
+            <!-- Rendered via JS -->
+          </div>
+          <div style="margin-top: 10px;" id="docMetaDetails"></div>
+        </div>
+
+        <!-- Right: Evidence Card, Rule Diff & Decision Panel -->
+        <div class="side-analysis-card" id="sideAnalysisContainer">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: CROSS-DOCUMENT EVIDENCE GRAPH -->
+    <section class="tab-panel" id="evidenceGraphTab">
+      <div id="evidenceGraphContainer"></div>
+    </section>
+
+    <!-- TAB 4: 5-TIER VERIFICATION LADDER -->
+    <section class="tab-panel" id="verificationLadderTab">
+      <!-- Rendered via JS -->
+    </section>
+
+    <!-- TAB 5: FACILITY & INFRASTRUCTURE AUDIT -->
+    <section class="tab-panel" id="infraTab">
+      <div style="margin-bottom: 16px;">
+        <h3 style="font-size: 15px; font-weight: 700; color: #1e293b;">Infrastructure Compliance Verification</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+          Automated evaluation of campus facilities, barrier-free access, laboratory terminals, and egress corridors.
+        </p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 16px;" id="infraEvidenceGrid">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- TAB 6: RULE CONFIG & VERSION HISTORY (Admin) -->
+    <section class="tab-panel" id="rulesEngineTab">
+      <!-- Rendered via JS -->
+    </section>
+
+    <!-- TAB 7: SHA-256 AUDIT LEDGER -->
+    <section class="tab-panel" id="auditTrailTab">
+      <!-- Rendered via JS -->
+    </section>
+
+    <!-- TAB 8: INSTITUTION PORTAL & PRE-FLIGHT ("What's missing") -->
+    <section class="tab-panel" id="institutionTab">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>Applicant Institution Pre-Flight Checklist ("What's Missing" Report)</span>
+          </div>
+          <span class="badge status-pending">Pre-Submission Validation</span>
+        </div>
+        <div class="panel-body">
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+            Before final submission, the pre-flight scanner validates all required statutory records against Handbook mandates to detect missing documents, lapsed validity, and contradictory declarations early.
+          </p>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
+            <div>
+              <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">Document Upload & Ingestion</h4>
+              <div style="border: 2px dashed var(--border-medium); border-radius: var(--radius-md); padding: 30px; text-align: center; background: #fafbfc; cursor: pointer;" onclick="document.getElementById('fileUploadInput').click()">
+                <div style="font-size: 24px; margin-bottom: 8px;">📄</div>
+                <strong style="display: block; font-size: 13px; color: var(--text-main);">Upload Document (PDF, PNG, JPG)</strong>
+                <span style="font-size: 11px; color: var(--text-muted);">Validates file type by binary signature. Max 15 MB.</span>
+                <input type="file" id="fileUploadInput" style="display: none;" onchange="window.App.handleSimulatedUpload(event)">
+              </div>
+            </div>
+
+            <div>
+              <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">Pre-Flight Status Report</h4>
+              <div id="preflightChecklistContainer">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 9: METRICS & DEMO WALKTHROUGH -->
+    <section class="tab-panel" id="demoMetricsTab">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>System Performance Metrics</span>
+          </div>
+          <span class="badge status-verified">Benchmark Audited</span>
+        </div>
+        <div class="panel-body">
+          <div class="kpi-grid" style="margin-bottom: 0;">
+            <div class="kpi-card">
+              <div class="kpi-icon">🎯</div>
+              <div class="kpi-content">
+                <h3>98.4%</h3>
+                <p>Extraction Accuracy</p>
+                <div class="kpi-subtext">On seeded benchmark dataset</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon">✓</div>
+              <div class="kpi-content">
+                <h3>91.2%</h3>
+                <p>Verification Success Rate</p>
+                <div class="kpi-subtext">Across adapter endpoints</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon">⚡</div>
+              <div class="kpi-content">
+                <h3>140 ms</h3>
+                <p>Avg Verification Time</p>
+                <div class="kpi-subtext">Automated ladder tiers 1-3</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon">🚨</div>
+              <div class="kpi-content">
+                <h3>3</h3>
+                <p>Active Exceptions</p>
+                <div class="kpi-subtext">Routed to Officer Queue</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Demo Flow Walkthrough -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>Automated Verification Pipeline Walkthrough</span>
+          </div>
+          <button class="btn-primary" onclick="window.App.runFullDemoPipeline()">
+            <span>Run Complete Demo Flow</span>
+          </button>
+        </div>
+        <div class="panel-body">
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+            Executes the full end-to-end pipeline: <strong>upload → classify → extract → cross-check → verify → flag → Evidence Card → officer sign-off</strong>.
+          </p>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;" id="demoPipelineSteps">
+            <span class="badge status-verified">1. Upload & Signature Check</span>
+            <span class="badge status-verified">2. Document Classification</span>
+            <span class="badge status-verified">3. Evidence Node Extraction</span>
+            <span class="badge status-verified">4. Cross-Document Graph</span>
+            <span class="badge status-verified">5. Ladder Adapter Verification</span>
+            <span class="badge status-mismatch">6. Anomaly Signal Flagging</span>
+            <span class="badge status-pending">7. Evidence Card Presentation</span>
+            <span class="badge status-verified">8. Officer Sign-off</span>
+          </div>
+
+          <div id="demoSimulationLog" style="background: #0f172a; color: #cbd5e1; font-family: var(--font-mono); font-size: 11px; padding: 12px; border-radius: var(--radius-sm); max-height: 220px; overflow-y: auto;">
+            <div>[READY] Verification pipeline initialized. Click "Run Complete Demo Flow" to simulate.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Truthful notice required in footer of Metrics / Demo page -->
+      <div class="metrics-footer-note">
+        Concept prototype. Uses sample data.
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       MODAL 1: LOGIN & ROLE SWITCHER
+       ======================================================================== -->
+  <div class="modal-backdrop" id="loginModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 style="font-size: 14px; font-weight: 700; color: #1e293b;">User Authentication</h3>
+        <button onclick="window.App.closeModal('loginModal')" style="border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="login-header-block">
+          <h2>ShowYourWork</h2>
+          <div class="login-subtitle">Evidence-First Application Validation</div>
+          <div class="login-tagline">Flag. Verify. Decide.</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Select Role:</label>
+            <select id="modalRoleSelect" style="width: 100%; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--border-medium); font-size: 12px; font-weight: 600;">
+              <option value="OFFICER">Officer (Regulatory Scrutiny Dashboard)</option>
+              <option value="INSTITUTION">Institution (Applicant Pre-Flight & Upload)</option>
+              <option value="ADMIN">Admin (Rule Configuration & Ledger)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Username / Access ID:</label>
+            <input type="text" id="loginUsernameInput" value="officer_review" style="width: 100%; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--border-medium); font-size: 12px;">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Passkey / Credentials:</label>
+            <input type="password" value="••••••••••••" style="width: 100%; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--border-medium); font-size: 12px;">
+          </div>
+        </div>
+
+        <!-- Truthful minimal notice on Login screen -->
+        <div class="truthful-notice">
+          Concept prototype. Uses sample data.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="window.App.closeModal('loginModal')">Cancel</button>
+        <button class="btn-primary" onclick="window.App.handleLoginSubmit()">
+          <span>Authenticate Session</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: STATUTORY RECTIFICATION DIRECTIVE (DEFICIENCY NOTICE)
+       ======================================================================== -->
+  <div class="modal-backdrop" id="rectificationModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 14px; font-weight: 700; color: #1e293b;">Regulatory Rectification Directive</h3>
+        <button onclick="window.App.closeModal('rectificationModal')" style="border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="border-bottom: 1px solid var(--border-light); padding-bottom: 12px; margin-bottom: 14px;">
+          <h4 style="font-size: 13px; font-weight: 700; color: #0f172a;">Regulatory Application Review Directorate</h4>
+          <p style="font-size: 11px; color: var(--text-muted);">Regional Scrutiny Bureau | Document Authentication Division</p>
+          <div style="margin-top: 6px; font-weight: 700; color: #dc2626; font-size: 12px;">
+            MEMORANDUM OF PRELIMINARY DEFICIENCIES & RECTIFICATION DIRECTIVE
+          </div>
+        </div>
+
+        <div style="font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
+          <strong>Applicant Entity:</strong> <span id="memoInstName">Apex Institute of Technology & Management</span><br>
+          <strong>Dossier Reference:</strong> <span id="memoAppId">APP-2026-EOA-98421</span> | <strong>Date:</strong> <span id="memoDate"></span>
+        </div>
+
+        <p style="font-size: 12px; color: #334155; margin-bottom: 10px;">
+          Upon automated multi-document cross-verification of your dossier, the following discrepancies have been flagged against Handbook regulations:
+        </p>
+
+        <ul id="memoDeficiencyPoints" style="padding-left: 18px; font-size: 12px; color: #1e293b; margin-bottom: 14px;">
+          <!-- Dynamically populated -->
+        </ul>
+
+        <div style="padding: 10px 12px; background: #fffbeb; border: 1px solid #fed7aa; border-radius: 4px; font-size: 11px; color: #9a3412;">
+          <strong>ACTION REQUIRED:</strong> You are granted a period of <strong>7 (Seven) working days</strong> to upload rectified documentation through the portal. Failure to rectify will mandate an on-site physical inspection.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="window.App.closeModal('rectificationModal')">Cancel</button>
+        <button class="btn-primary" onclick="window.App.dispatchRectificationMemo()">
+          <span>Dispatch Notice to Institution</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/evidenceGraph.js"></script>
+  <script src="js/verificationLadder.js"></script>
+  <script src="js/forensicEngine.js"></script>
+  <script src="js/complianceRules.js"></script>
+  <script src="js/auditTrail.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
